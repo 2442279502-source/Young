@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工程算量小助手</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "微软雅黑", "Microsoft YaHei", sans-serif;
+    background: #f0f4f8;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .header {
+    width: 100%;
+    max-width: 800px;
+    background: linear-gradient(135deg, #1a3a5c, #2c5f8a);
+    color: #fff;
+    text-align: center;
+    padding: 22px 20px;
+    border-radius: 10px 10px 0 0;
+  }
+  .header h1 { font-size: 22px; }
+  .header p  { font-size: 13px; color: #a8c8e8; margin-top: 4px; }
+
+  .container {
+    width: 100%;
+    max-width: 800px;
+    background: #fff;
+    padding: 24px;
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+
+  /* 输入表单 */
+  .form-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    margin-bottom: 16px;
+  }
+  .form-group { display: flex; flex-direction: column; }
+  .form-group label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+  .form-group input {
+    width: 100px;
+    padding: 8px 10px;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .form-group input:focus {
+    outline: none;
+    border-color: #3978a3;
+  }
+
+  .btn {
+    padding: 9px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-add { background: #3978a3; color: #fff; }
+  .btn-add:hover { background: #2c5f8a; }
+  .btn-export { background: #2d8a56; color: #fff; margin-right: 8px; }
+  .btn-export:hover { background: #236e44; }
+  .btn-clear { background: #c0392b; color: #fff; }
+  .btn-clear:hover { background: #a93226; }
+
+  /* 结果表格 */
+  .result-area { margin-top: 20px; }
+  .summary-bar {
+    background: #e8f0f8;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: #1a3a5c;
+  }
+  .summary-bar strong { color: #3978a3; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th {
+    background: #3978a3;
+    color: #fff;
+    padding: 10px 8px;
+    text-align: center;
+    font-weight: normal;
+  }
+  td {
+    padding: 8px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+  }
+  tr:hover td { background: #f7f9fc; }
+  .total-row td {
+    font-weight: bold;
+    border-top: 2px solid #3978a3;
+    background: #f0f4f8;
+  }
+
+  .empty-hint {
+    text-align: center;
+    color: #aaa;
+    padding: 40px;
+    font-size: 14px;
+  }
+
+  .action-bar { margin-top: 20px; text-align: right; }
+
+  .footer {
+    margin-top: 20px;
+    color: #999;
+    font-size: 12px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>工程算量小助手</h1>
+  <p>输入构件尺寸 · 自动计算混凝土、钢筋、模板</p>
+</div>
+
+<div class="container">
+
+  <!-- 输入表单 -->
+  <form action="/add" method="POST">
+    <div class="form-row">
+      <div class="form-group">
+        <label>构件名称</label>
+        <input type="text" name="name" placeholder="如 B1" required>
+      </div>
+      <div class="form-group">
+        <label>长（米）</label>
+        <input type="number" name="length" step="0.01" placeholder="3.6" required>
+      </div>
+      <div class="form-group">
+        <label>宽（米）</label>
+        <input type="number" name="width" step="0.01" placeholder="4.2" required>
+      </div>
+      <div class="form-group">
+        <label>高（米）</label>
+        <input type="number" name="height" step="0.01" placeholder="0.12" required>
+      </div>
+      <button type="submit" class="btn btn-add">+ 添加</button>
+    </div>
+  </form>
+
+  <!-- 结果 -->
+  <div class="result-area">
+    {% if records %}
+    <div class="summary-bar">
+      已添加 <strong>{{ records|length }}</strong> 个构件 |
+      混凝土合计 <strong>{{ "%.2f"|format(records|sum(attribute='concrete')) }} m3</strong> |
+      钢筋合计  <strong>{{ "%.1f"|format(records|sum(attribute='rebar')) }} kg</strong> |
+      模板合计  <strong>{{ "%.2f"|format(records|sum(attribute='formwork')) }} m2</strong>
+    </div>
+
+    <table>
+      <tr>
+        <th>序号</th>
+        <th>构件名称</th>
+        <th>长 (m)</th>
+        <th>宽 (m)</th>
+        <th>高 (m)</th>
+        <th>混凝土 (m3)</th>
+        <th>钢筋 (kg)</th>
+        <th>模板 (m2)</th>
+      </tr>
+      {% for r in records %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ r.name }}</td>
+        <td>{{ r.length }}</td>
+        <td>{{ r.width }}</td>
+        <td>{{ r.height }}</td>
+        <td>{{ r.concrete }}</td>
+        <td>{{ r.rebar }}</td>
+        <td>{{ r.formwork }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="total-row">
+        <td></td><td>合计</td><td></td><td></td><td></td>
+        <td>{{ "%.2f"|format(records|sum(attribute='concrete')) }}</td>
+        <td>{{ "%.1f"|format(records|sum(attribute='rebar')) }}</td>
+        <td>{{ "%.2f"|format(records|sum(attribute='formwork')) }}</td>
+      </tr>
+    </table>
+
+    <div class="action-bar">
+      <a href="/export" class="btn btn-export">下载 Excel</a>
+      <a href="/clear" class="btn btn-clear">清空列表</a>
+    </div>
+    {% else %}
+    <div class="empty-hint">还没有添加构件，在上面输入尺寸后点「+ 添加」</div>
+    {% endif %}
+  </div>
+
+</div>
+
+<div class="footer">
+  工程算量小助手 · Flask + openpyxl · 杨炜臻
+</div>
+
+</body>
+</html>
