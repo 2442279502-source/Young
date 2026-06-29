@@ -1,0 +1,8 @@
+# Flask - 轻量级网页框架，让浏览器能访问我们的应用
+flask==3.1.1
+
+# Ultralytics - YOLO目标检测库，包含预训练模型
+ultralytics==8.3.0
+
+# Pillow - 图片处理库
+pillow==11.0.0
