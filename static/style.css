@@ -1,0 +1,230 @@
+/* ========================================
+   工程算量小助手 v2.0 — Style
+   淡蓝主题，简洁专业
+   ======================================== */
+
+:root {
+  --primary:       #5b9bd5;
+  --primary-light: #e8f2fa;
+  --primary-dark:  #3a7abf;
+  --bg:            #eef3f8;
+  --card:          #ffffff;
+  --text:          #333;
+  --text-secondary:#7a8fa5;
+  --border:        #d0dce8;
+  --success:       #6aab85;
+  --warning:       #e8a840;
+  --radius:        8px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: "Microsoft YaHei", "微软雅黑", sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 12px 48px;
+  color: var(--text);
+}
+
+/* ---- Header ---- */
+.header {
+  width: 100%; max-width: 960px;
+  background: var(--primary);
+  color: #fff; text-align: center;
+  padding: 16px 20px; border-radius: var(--radius) var(--radius) 0 0;
+  font-size: 17px; font-weight: bold; letter-spacing: 1px;
+}
+.header .version { font-size: 11px; opacity: .7; margin-left: 6px; }
+
+/* ---- Container ---- */
+.container {
+  width: 100%; max-width: 960px;
+  background: var(--card); padding: 20px 24px;
+  border-radius: 0 0 var(--radius) var(--radius);
+  box-shadow: 0 1px 6px rgba(91,155,213,.1);
+}
+
+/* ---- Mode Tabs ---- */
+.mode-tabs {
+  display: flex; gap: 0; margin-bottom: 16px;
+  border: 2px solid var(--primary); border-radius: 6px;
+  overflow: hidden; width: fit-content;
+}
+.mode-tab {
+  padding: 7px 20px; font-size: 13px; cursor: pointer;
+  border: none; background: #fff; color: var(--primary);
+  transition: all .2s;
+}
+.mode-tab.active { background: var(--primary); color: #fff; }
+.mode-tab:hover:not(.active) { background: var(--primary-light); }
+
+/* ---- Type Tabs ---- */
+.type-tabs {
+  display: flex; gap: 6px; margin-bottom: 14px;
+}
+.type-tab {
+  padding: 6px 18px; font-size: 13px; cursor: pointer;
+  border: 1px solid var(--border); border-radius: 20px;
+  background: #fff; color: var(--text-secondary);
+  transition: all .2s;
+}
+.type-tab.active {
+  border-color: var(--primary); background: var(--primary-light);
+  color: var(--primary); font-weight: bold;
+}
+.type-tab:hover:not(.active) { border-color: var(--primary); }
+
+/* ---- Form ---- */
+.form-section { display: none; }
+.form-section.active { display: block; }
+
+.form-row {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  align-items: flex-end; margin-bottom: 12px;
+}
+.form-group { display: flex; flex-direction: column; }
+.form-group label {
+  font-size: 11px; color: var(--text-secondary);
+  margin-bottom: 3px; white-space: nowrap;
+}
+.form-group label .required { color: #d9534f; }
+.form-group input, .form-group select {
+  padding: 6px 8px; border: 1px solid var(--border);
+  border-radius: 5px; font-size: 13px; color: var(--text);
+  background: #fafcfd; min-width: 72px;
+}
+.form-group input:focus, .form-group select:focus {
+  outline: none; border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(91,155,213,.12);
+}
+.form-group input[type=number] { width: 85px; }
+.form-group select { width: auto; }
+
+/* Section labels */
+.section-label {
+  font-size: 12px; font-weight: bold; color: var(--primary-dark);
+  margin: 10px 0 8px; padding-bottom: 4px;
+  border-bottom: 1px dashed var(--border);
+}
+
+/* Toggle section */
+.toggle-section {
+  margin-bottom: 10px;
+}
+.toggle-header {
+  font-size: 12px; color: var(--primary-dark); cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  user-select: none;
+}
+.toggle-header:hover { color: var(--primary); }
+.toggle-body {
+  margin-top: 8px; padding: 10px 12px;
+  background: #f9fbfd; border-radius: 5px;
+  border: 1px dashed var(--border);
+}
+
+/* Cost toggle */
+.cost-row {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  align-items: flex-end; margin-bottom: 12px;
+  padding: 10px 12px; background: #f5f9fc;
+  border-radius: 6px; border: 1px dashed #c4d8e8;
+}
+.toggle-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: #5a7a99; cursor: pointer;
+  margin-bottom: 10px;
+}
+.toggle-label input[type=checkbox] {
+  accent-color: var(--primary); width: 14px; height: 14px;
+}
+
+/* ---- Buttons ---- */
+.btn {
+  padding: 7px 16px; border: none; border-radius: 5px;
+  font-size: 13px; cursor: pointer; transition: background .2s;
+  text-decoration: none; display: inline-block;
+}
+.btn-add { background: var(--primary); color: #fff; }
+.btn-add:hover { background: var(--primary-dark); }
+.btn-export { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+.btn-export:hover { background: var(--primary-light); }
+.btn-clear { background: #fff; color: #c0392b; border: 1px solid #e0c0c0; }
+.btn-clear:hover { background: #fef5f5; }
+
+/* ---- Table ---- */
+.result-area { margin-top: 10px; overflow-x: auto; }
+table {
+  width: 100%; border-collapse: collapse;
+  font-size: 12px; white-space: nowrap;
+}
+th {
+  background: var(--primary); color: #fff;
+  padding: 7px 6px; text-align: center;
+  font-weight: normal; font-size: 11px;
+}
+td {
+  padding: 6px 6px; text-align: center;
+  border-bottom: 1px solid var(--bg);
+}
+tr:hover td { background: #f7fafd; }
+.total-row td {
+  font-weight: bold; border-top: 2px solid var(--primary);
+  background: #f5f8fb;
+}
+.cost-col { background: #fafdf5; }
+th.cost-col { background: var(--success); }
+
+/* Type badge */
+.badge {
+  display: inline-block; padding: 1px 7px; border-radius: 10px;
+  font-size: 10px; color: #fff;
+}
+.badge-slab   { background: #5b9bd5; }
+.badge-beam   { background: #e8a840; }
+.badge-column { background: #6aab85; }
+
+/* Detail toggle */
+.detail-toggle {
+  font-size: 11px; color: var(--primary); cursor: pointer;
+  text-decoration: underline; border: none; background: none;
+}
+.detail-row { display: none; }
+.detail-row.open { display: table-row; }
+.detail-row td {
+  padding: 10px 12px; text-align: left;
+  background: #fafcfd; font-size: 11px;
+}
+.detail-table {
+  width: 100%; border-collapse: collapse;
+}
+.detail-table th {
+  background: #e8f2fa; color: var(--text-secondary);
+  font-size: 10px; padding: 4px 6px;
+}
+.detail-table td {
+  font-size: 11px; padding: 3px 6px;
+  border-bottom: 1px solid #eef3f8;
+}
+
+/* Empty hint */
+.empty-hint {
+  text-align: center; color: #b0c4d8;
+  padding: 36px; font-size: 13px;
+}
+
+/* Action bar */
+.action-bar { margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end; }
+
+/* Help tooltip */
+.help-tip {
+  display: inline-block; width: 14px; height: 14px;
+  background: var(--text-secondary); color: #fff;
+  border-radius: 50%; text-align: center;
+  font-size: 10px; line-height: 14px; cursor: help;
+  margin-left: 2px;
+}

@@ -3,221 +3,585 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>工程算量小助手</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: "微软雅黑", "Microsoft YaHei", sans-serif;
-    background: #f0f4f8;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-  }
-
-  .header {
-    width: 100%;
-    max-width: 800px;
-    background: linear-gradient(135deg, #1a3a5c, #2c5f8a);
-    color: #fff;
-    text-align: center;
-    padding: 22px 20px;
-    border-radius: 10px 10px 0 0;
-  }
-  .header h1 { font-size: 22px; }
-  .header p  { font-size: 13px; color: #a8c8e8; margin-top: 4px; }
-
-  .container {
-    width: 100%;
-    max-width: 800px;
-    background: #fff;
-    padding: 24px;
-    border-radius: 0 0 10px 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-  }
-
-  /* 输入表单 */
-  .form-row {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    margin-bottom: 16px;
-  }
-  .form-group { display: flex; flex-direction: column; }
-  .form-group label {
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 4px;
-  }
-  .form-group input {
-    width: 100px;
-    padding: 8px 10px;
-    border: 1px solid #d0d0d0;
-    border-radius: 6px;
-    font-size: 14px;
-  }
-  .form-group input:focus {
-    outline: none;
-    border-color: #3978a3;
-  }
-
-  .btn {
-    padding: 9px 20px;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .btn-add { background: #3978a3; color: #fff; }
-  .btn-add:hover { background: #2c5f8a; }
-  .btn-export { background: #2d8a56; color: #fff; margin-right: 8px; }
-  .btn-export:hover { background: #236e44; }
-  .btn-clear { background: #c0392b; color: #fff; }
-  .btn-clear:hover { background: #a93226; }
-
-  /* 结果表格 */
-  .result-area { margin-top: 20px; }
-  .summary-bar {
-    background: #e8f0f8;
-    padding: 12px 16px;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    font-size: 14px;
-    color: #1a3a5c;
-  }
-  .summary-bar strong { color: #3978a3; }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
-  th {
-    background: #3978a3;
-    color: #fff;
-    padding: 10px 8px;
-    text-align: center;
-    font-weight: normal;
-  }
-  td {
-    padding: 8px;
-    text-align: center;
-    border-bottom: 1px solid #eee;
-  }
-  tr:hover td { background: #f7f9fc; }
-  .total-row td {
-    font-weight: bold;
-    border-top: 2px solid #3978a3;
-    background: #f0f4f8;
-  }
-
-  .empty-hint {
-    text-align: center;
-    color: #aaa;
-    padding: 40px;
-    font-size: 14px;
-  }
-
-  .action-bar { margin-top: 20px; text-align: right; }
-
-  .footer {
-    margin-top: 20px;
-    color: #999;
-    font-size: 12px;
-    text-align: center;
-  }
-</style>
+<title>工程算量小助手 v2.0</title>
+<link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
 <div class="header">
-  <h1>工程算量小助手</h1>
-  <p>输入构件尺寸 · 自动计算混凝土、钢筋、模板</p>
+  工程算量小助手<span class="version">v2.0</span>
 </div>
 
 <div class="container">
 
-  <!-- 输入表单 -->
+  <!-- ============ 模式切换 ============ -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="quick">快速估算</button>
+    <button class="mode-tab" data-mode="precise">精确配筋</button>
+  </div>
+
   <form action="/add" method="POST">
-    <div class="form-row">
+    <input type="hidden" name="mode" id="modeInput" value="quick">
+    <input type="hidden" name="comp_type" id="typeInput" value="slab">
+
+    <!-- ============ 精确模式：构件类型切换 ============ -->
+    <div class="type-tabs" id="typeTabs" style="display:none;">
+      <button type="button" class="type-tab active" data-type="slab">板</button>
+      <button type="button" class="type-tab" data-type="beam">梁</button>
+      <button type="button" class="type-tab" data-type="column">柱</button>
+    </div>
+
+    <!-- ============ 快速估算表单 ============ -->
+    <div class="form-section active" id="quickForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label>构件名称 <span class="required">*</span></label>
+          <input type="text" name="name" placeholder="如 B1" required>
+        </div>
+        <div class="form-group">
+          <label>长（m） <span class="required">*</span></label>
+          <input type="number" name="length" step="0.01" placeholder="4.2" required>
+        </div>
+        <div class="form-group">
+          <label>宽（m） <span class="required">*</span></label>
+          <input type="number" name="width" step="0.01" placeholder="3.6" required>
+        </div>
+        <div class="form-group">
+          <label>高/厚（m） <span class="required">*</span></label>
+          <input type="number" name="height" step="0.01" placeholder="0.12" required>
+        </div>
+        <div class="form-group">
+          <label>配筋率（%）</label>
+          <input type="number" name="rebar_ratio" step="0.01" value="1.0" placeholder="1.0">
+        </div>
+        <button type="submit" class="btn btn-add">+ 添加</button>
+      </div>
+    </div>
+
+    <!-- ============ 精确配筋：板 ============ -->
+    <div class="form-section" id="form-slab">
+      <div class="section-label">构件尺寸</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>构件名称 <span class="required">*</span></label>
+          <input type="text" name="name" placeholder="如 B1" required>
+        </div>
+        <div class="form-group">
+          <label>板长（m） <span class="required">*</span></label>
+          <input type="number" name="L" step="0.01" placeholder="4.2" required>
+        </div>
+        <div class="form-group">
+          <label>板宽（m） <span class="required">*</span></label>
+          <input type="number" name="W" step="0.01" placeholder="3.6" required>
+        </div>
+        <div class="form-group">
+          <label>板厚（mm） <span class="required">*</span></label>
+          <input type="number" name="t_slab" step="1" value="120" placeholder="120" required>
+        </div>
+        <div class="form-group">
+          <label>保护层（mm）<span class="help-tip" title="GB 50010-2010 表8.2.1：一类环境板取15mm">?</span></label>
+          <input type="number" name="cover" step="1" value="{{ cover_defaults.slab }}" placeholder="15">
+        </div>
+        <div class="form-group">
+          <label>钢筋类型</label>
+          <select name="rebar_type">
+            <option value="HRB400">HRB400 (带肋)</option>
+            <option value="HPB300">HPB300 (光圆)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-label">底筋配置</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>短跨直径（mm） <span class="required">*</span></label>
+          <select name="d_btm_short">
+            {% for d in diameters %}
+            <option value="{{ d }}" {% if d == 10 %}selected{% endif %}>{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>短跨间距（mm） <span class="required">*</span></label>
+          <input type="number" name="s_btm_short" step="10" value="150" required>
+        </div>
+        <div class="form-group">
+          <label>长跨直径（mm） <span class="required">*</span></label>
+          <select name="d_btm_long">
+            {% for d in diameters %}
+            <option value="{{ d }}" {% if d == 10 %}selected{% endif %}>{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>长跨间距（mm） <span class="required">*</span></label>
+          <input type="number" name="s_btm_long" step="10" value="200" required>
+        </div>
+      </div>
+
+      <div class="toggle-section">
+        <div class="toggle-header">+ 面筋配置（可选）</div>
+        <div class="toggle-body" style="display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label>短跨直径（mm）</label>
+              <select name="d_top_short">
+                <option value="">-- 无 --</option>
+                {% for d in diameters %}
+                <option value="{{ d }}">{{ d }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>短跨间距（mm）</label>
+              <input type="number" name="s_top_short" step="10" value="150">
+            </div>
+            <div class="form-group">
+              <label>长跨直径（mm）</label>
+              <select name="d_top_long">
+                <option value="">-- 无 --</option>
+                {% for d in diameters %}
+                <option value="{{ d }}">{{ d }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>长跨间距（mm）</label>
+              <input type="number" name="s_top_long" step="10" value="200">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-add">+ 添加板</button>
+    </div>
+
+    <!-- ============ 精确配筋：梁 ============ -->
+    <div class="form-section" id="form-beam">
+      <div class="section-label">构件尺寸</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>构件名称 <span class="required">*</span></label>
+          <input type="text" name="name" placeholder="如 KL1" required>
+        </div>
+        <div class="form-group">
+          <label>梁长（m） <span class="required">*</span></label>
+          <input type="number" name="L" step="0.01" placeholder="3.0" required>
+        </div>
+        <div class="form-group">
+          <label>截面宽（mm） <span class="required">*</span></label>
+          <input type="number" name="b" step="10" value="250" placeholder="250" required>
+        </div>
+        <div class="form-group">
+          <label>截面高（mm） <span class="required">*</span></label>
+          <input type="number" name="h" step="10" value="500" placeholder="500" required>
+        </div>
+        <div class="form-group">
+          <label>保护层（mm）<span class="help-tip" title="GB 50010-2010 表8.2.1：一类环境梁取20mm">?</span></label>
+          <input type="number" name="cover" step="1" value="{{ cover_defaults.beam }}" placeholder="20">
+        </div>
+        <div class="form-group">
+          <label>钢筋类型</label>
+          <select name="rebar_type">
+            <option value="HRB400">HRB400</option>
+            <option value="HPB300">HPB300</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-label">纵筋</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>上部根数 <span class="required">*</span></label>
+          <input type="number" name="n_top" step="1" value="2" placeholder="2" required>
+        </div>
+        <div class="form-group">
+          <label>上部直径（mm） <span class="required">*</span></label>
+          <select name="d_top">
+            {% for d in diameters %}{% if d >= 12 %}
+            <option value="{{ d }}" {% if d == 18 %}selected{% endif %}>{{ d }}</option>
+            {% endif %}{% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>下部根数 <span class="required">*</span></label>
+          <input type="number" name="n_btm" step="1" value="3" placeholder="3" required>
+        </div>
+        <div class="form-group">
+          <label>下部直径（mm） <span class="required">*</span></label>
+          <select name="d_btm">
+            {% for d in diameters %}{% if d >= 12 %}
+            <option value="{{ d }}" {% if d == 20 %}selected{% endif %}>{{ d }}</option>
+            {% endif %}{% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>锚固长度（mm）<span class="help-tip" title="留空自动按 C30+HRB400 计算(35d)">?</span></label>
+          <input type="number" name="anchor_len" step="10" placeholder="自动">
+        </div>
+      </div>
+
+      <div class="section-label">箍筋</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>箍筋直径（mm） <span class="required">*</span></label>
+          <select name="d_stirrup">
+            <option value="6">6</option>
+            <option value="8" selected>8</option>
+            <option value="10">10</option>
+            <option value="12">12</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>箍筋间距（mm） <span class="required">*</span></label>
+          <input type="number" name="s_stirrup" step="10" value="200" required>
+        </div>
+        <div class="form-group">
+          <label>肢数</label>
+          <select name="legs">
+            <option value="2" selected>2</option>
+            <option value="4">4</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="toggle-label" style="margin-top:12px;">
+            <input type="checkbox" name="has_dense" id="beamDense">
+            加密区
+          </label>
+        </div>
+      </div>
+
+      <div class="toggle-section">
+        <div class="toggle-header">+ 腰筋配置（h &gt; 450mm 时建议设置）</div>
+        <div class="toggle-body" style="display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label>每侧根数</label>
+              <input type="number" name="n_waist" step="1" value="1" min="0">
+            </div>
+            <div class="form-group">
+              <label>腰筋直径（mm）</label>
+              <select name="d_waist">
+                {% for d in [10,12,14,16] %}
+                <option value="{{ d }}" {% if d == 12 %}selected{% endif %}>{{ d }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-add">+ 添加梁</button>
+    </div>
+
+    <!-- ============ 精确配筋：柱 ============ -->
+    <div class="form-section" id="form-column">
+      <div class="section-label">构件尺寸</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>构件名称 <span class="required">*</span></label>
+          <input type="text" name="name" placeholder="如 Z1" required>
+        </div>
+        <div class="form-group">
+          <label>截面宽 b（mm） <span class="required">*</span></label>
+          <input type="number" name="b" step="10" value="400" placeholder="400" required>
+        </div>
+        <div class="form-group">
+          <label>截面高 h（mm） <span class="required">*</span></label>
+          <input type="number" name="h_sec" step="10" value="400" placeholder="400" required>
+        </div>
+        <div class="form-group">
+          <label>柱高（m） <span class="required">*</span></label>
+          <input type="number" name="H" step="0.01" value="3.0" placeholder="3.0" required>
+        </div>
+        <div class="form-group">
+          <label>保护层（mm）<span class="help-tip" title="GB 50010-2010 表8.2.1：一类环境柱取20mm">?</span></label>
+          <input type="number" name="cover" step="1" value="{{ cover_defaults.column }}" placeholder="20">
+        </div>
+        <div class="form-group">
+          <label>钢筋类型</label>
+          <select name="rebar_type">
+            <option value="HRB400">HRB400</option>
+            <option value="HPB300">HPB300</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-label">纵筋与箍筋</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>纵筋根数 <span class="required">*</span></label>
+          <input type="number" name="n_long" step="1" value="8" placeholder="8" required>
+        </div>
+        <div class="form-group">
+          <label>纵筋直径（mm） <span class="required">*</span></label>
+          <select name="d_long">
+            {% for d in diameters %}{% if d >= 12 %}
+            <option value="{{ d }}" {% if d == 20 %}selected{% endif %}>{{ d }}</option>
+            {% endif %}{% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>箍筋直径（mm） <span class="required">*</span></label>
+          <select name="d_stirrup">
+            <option value="6">6</option>
+            <option value="8" selected>8</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>箍筋间距（mm） <span class="required">*</span></label>
+          <input type="number" name="s_stirrup" step="10" value="150" required>
+        </div>
+        <div class="form-group">
+          <label>肢数</label>
+          <select name="legs">
+            <option value="2x2" selected>2x2</option>
+            <option value="3x3">3x3</option>
+            <option value="4x4">4x4</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>搭接长度（mm）<span class="help-tip" title="留空自动按50%搭接率计算">?</span></label>
+          <input type="number" name="lap_len" step="10" placeholder="自动">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-add">+ 添加柱</button>
+    </div>
+
+    <!-- ============ 成本预算（通用） ============ -->
+    <label class="toggle-label">
+      <input type="checkbox" id="costToggle" {{ 'checked' if prices else '' }}>
+      需要计算成本预算
+    </label>
+
+    <div class="cost-row" id="costRow" style="display: {{ 'flex' if prices else 'none' }};">
       <div class="form-group">
-        <label>构件名称</label>
-        <input type="text" name="name" placeholder="如 B1" required>
+        <label>混凝土单价（元/m³）</label>
+        <input type="number" name="concrete_price" step="0.01" placeholder="如 420"
+               value="{{ prices.concrete_price if prices and prices.concrete_price else '' }}">
       </div>
       <div class="form-group">
-        <label>长（米）</label>
-        <input type="number" name="length" step="0.01" placeholder="3.6" required>
+        <label>钢筋单价（元/kg）</label>
+        <input type="number" name="rebar_price" step="0.01" placeholder="如 4.5"
+               value="{{ prices.rebar_price if prices and prices.rebar_price else '' }}">
       </div>
       <div class="form-group">
-        <label>宽（米）</label>
-        <input type="number" name="width" step="0.01" placeholder="4.2" required>
+        <label>模板单价（元/m²）</label>
+        <input type="number" name="formwork_price" step="0.01" placeholder="如 55"
+               value="{{ prices.formwork_price if prices and prices.formwork_price else '' }}">
       </div>
-      <div class="form-group">
-        <label>高（米）</label>
-        <input type="number" name="height" step="0.01" placeholder="0.12" required>
-      </div>
-      <button type="submit" class="btn btn-add">+ 添加</button>
     </div>
   </form>
 
-  <!-- 结果 -->
+  <!-- ============ 结果列表 ============ -->
   <div class="result-area">
-    {% if records %}
-    <div class="summary-bar">
-      已添加 <strong>{{ records|length }}</strong> 个构件 |
-      混凝土合计 <strong>{{ "%.2f"|format(records|sum(attribute='concrete')) }} m3</strong> |
-      钢筋合计  <strong>{{ "%.1f"|format(records|sum(attribute='rebar')) }} kg</strong> |
-      模板合计  <strong>{{ "%.2f"|format(records|sum(attribute='formwork')) }} m2</strong>
-    </div>
-
+    {% if calcs %}
     <table>
-      <tr>
-        <th>序号</th>
-        <th>构件名称</th>
-        <th>长 (m)</th>
-        <th>宽 (m)</th>
-        <th>高 (m)</th>
-        <th>混凝土 (m3)</th>
-        <th>钢筋 (kg)</th>
-        <th>模板 (m2)</th>
-      </tr>
-      {% for r in records %}
-      <tr>
-        <td>{{ loop.index }}</td>
-        <td>{{ r.name }}</td>
-        <td>{{ r.length }}</td>
-        <td>{{ r.width }}</td>
-        <td>{{ r.height }}</td>
-        <td>{{ r.concrete }}</td>
-        <td>{{ r.rebar }}</td>
-        <td>{{ r.formwork }}</td>
-      </tr>
-      {% endfor %}
-      <tr class="total-row">
-        <td></td><td>合计</td><td></td><td></td><td></td>
-        <td>{{ "%.2f"|format(records|sum(attribute='concrete')) }}</td>
-        <td>{{ "%.1f"|format(records|sum(attribute='rebar')) }}</td>
-        <td>{{ "%.2f"|format(records|sum(attribute='formwork')) }}</td>
-      </tr>
+      <thead>
+        <tr>
+          <th>序号</th>
+          <th>模式</th>
+          <th>名称</th>
+          <th>混凝土 (m³)</th>
+          <th>钢筋面积 (mm²)</th>
+          <th>钢筋 (kg)</th>
+          <th>模板 (m²)</th>
+          <th>含钢量 (kg/m³)</th>
+          {% if has_costs %}
+          <th class="cost-col">混凝土费 (元)</th>
+          <th class="cost-col">钢筋费 (元)</th>
+          <th class="cost-col">模板费 (元)</th>
+          <th class="cost-col">合计 (元)</th>
+          {% endif %}
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in calcs %}
+        {% set is_precise = (r.mode|default('quick') == 'precise') %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>
+            {% if is_precise %}
+            {% set badge_class = {'slab':'badge-slab','beam':'badge-beam','column':'badge-column'}.get(r.type, 'badge-slab') %}
+            {% set type_name = {'slab':'板','beam':'梁','column':'柱'}.get(r.type, '?') %}
+            <span class="badge {{ badge_class }}">{{ type_name }}</span>
+            {% else %}
+            <span style="font-size:11px;color:#999;">估算</span>
+            {% endif %}
+          </td>
+          <td>{{ r.name }}</td>
+          <td>{{ r.concrete }}</td>
+          <td>{{ "%.0f"|format(r.rebar_area|default(0)) }}</td>
+          <td>{{ r.rebar }}</td>
+          <td>{{ r.formwork }}</td>
+          <td>{{ "%.1f"|format(r.rebar_per_m3|default(0)) }}</td>
+          {% if has_costs %}
+          <td class="cost-col">{{ r.concrete_cost if r.concrete_cost is defined else '' }}</td>
+          <td class="cost-col">{{ r.rebar_cost if r.rebar_cost is defined else '' }}</td>
+          <td class="cost-col">{{ r.formwork_cost if r.formwork_cost is defined else '' }}</td>
+          <td class="cost-col">{{ r.total_cost if r.total_cost is defined else '' }}</td>
+          {% endif %}
+          <td>
+            {% if is_precise and r.detail %}
+            <button class="detail-toggle" data-target="detail-{{ loop.index }}">展开明细</button>
+            {% endif %}
+          </td>
+        </tr>
+
+        <!-- 钢筋明细行 -->
+        {% if is_precise and r.detail %}
+        <tr class="detail-row" id="detail-{{ loop.index }}">
+          <td colspan="{% if has_costs %}13{% else %}9{% endif %}">
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>钢筋位置</th>
+                  <th>直径 (mm)</th>
+                  <th>间距 (mm)</th>
+                  <th>根数</th>
+                  <th>每根长度 (mm)</th>
+                  <th>每米重 (kg/m)</th>
+                  <th>总重 (kg)</th>
+                  <th>截面积 (mm²)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for key, d in r.detail.items() %}
+                <tr>
+                  <td>{{ d.label|default(key) }}</td>
+                  <td>{{ d.diameter|default('') }}</td>
+                  <td>{{ d.spacing|default('') }}</td>
+                  <td>{{ d.count }}</td>
+                  <td>{{ "%.0f"|format(d.len_mm) }}</td>
+                  <td>{{ d.unit_w }}</td>
+                  <td>{{ d.total_kg }}</td>
+                  <td>{{ "%.0f"|format(d.area_mm2) }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+
+        <!-- 汇总行 -->
+        <tr class="total-row">
+          <td></td><td></td><td>合计</td>
+          <td>{{ "%.3f"|format(total_concrete) }}</td>
+          <td>{{ "%.0f"|format(total_area) }}</td>
+          <td>{{ "%.1f"|format(total_rebar) }}</td>
+          <td>{{ "%.2f"|format(total_formwork) }}</td>
+          <td></td>
+          {% if has_costs %}
+          <td class="cost-col">{{ "%.2f"|format(total_concrete_cost) }}</td>
+          <td class="cost-col">{{ "%.2f"|format(total_rebar_cost) }}</td>
+          <td class="cost-col">{{ "%.2f"|format(total_formwork_cost) }}</td>
+          <td class="cost-col">{{ "%.2f"|format(total_all_cost) }}</td>
+          {% endif %}
+          <td></td>
+        </tr>
+      </tbody>
     </table>
 
     <div class="action-bar">
-      <a href="/export" class="btn btn-export">下载 Excel</a>
-      <a href="/clear" class="btn btn-clear">清空列表</a>
+      <a href="/export" class="btn btn-export">导出 Excel</a>
+      <a href="/clear" class="btn btn-clear">清空</a>
     </div>
+
     {% else %}
-    <div class="empty-hint">还没有添加构件，在上面输入尺寸后点「+ 添加」</div>
+    <div class="empty-hint">选择模式，填入参数，开始计算</div>
     {% endif %}
   </div>
 
 </div>
 
-<div class="footer">
-  工程算量小助手 · Flask + openpyxl · 杨炜臻
-</div>
+<script src="/static/app.js"></script>
+<script>
+// ---- Mode switching (inline for robustness) ----
+(function () {
+  var modeTabs = document.querySelectorAll('.mode-tab');
+  var modeInput = document.getElementById('modeInput');
+  var quickForm = document.getElementById('quickForm');
+  var preciseForm = document.getElementById('preciseForm');
+  var typeTabs = document.getElementById('typeTabs');
+
+  modeTabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var mode = this.dataset.mode;
+      modeTabs.forEach(function (t) { t.classList.remove('active'); });
+      this.classList.add('active');
+      if (modeInput) modeInput.value = mode;
+      if (mode === 'quick') {
+        if (quickForm) quickForm.classList.add('active');
+        if (preciseForm) preciseForm.classList.remove('active');
+        if (typeTabs) typeTabs.style.display = 'none';
+      } else {
+        if (quickForm) quickForm.classList.remove('active');
+        if (preciseForm) preciseForm.classList.add('active');
+        if (typeTabs) typeTabs.style.display = 'flex';
+        // Show default slab form
+        document.querySelectorAll('.form-section').forEach(function(s) { s.classList.remove('active'); });
+        var slabForm = document.getElementById('form-slab');
+        if (slabForm) slabForm.classList.add('active');
+      }
+    });
+  });
+
+  // ---- Type switching ----
+  var typeTabsList = document.querySelectorAll('.type-tab');
+  typeTabsList.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var compType = this.dataset.type;
+      typeTabsList.forEach(function (t) { t.classList.remove('active'); });
+      this.classList.add('active');
+      document.getElementById('typeInput').value = compType;
+      document.querySelectorAll('.form-section').forEach(function(s) { s.classList.remove('active'); });
+      var target = document.getElementById('form-' + compType);
+      if (target) target.classList.add('active');
+    });
+  });
+
+  // ---- Cost toggle ----
+  var costToggle = document.getElementById('costToggle');
+  var costRow = document.getElementById('costRow');
+  if (costToggle && costRow) {
+    costToggle.addEventListener('change', function () {
+      costRow.style.display = this.checked ? 'flex' : 'none';
+    });
+  }
+
+  // ---- Toggle sections (top bars, waist bars) ----
+  document.querySelectorAll('.toggle-header').forEach(function (hdr) {
+    hdr.addEventListener('click', function () {
+      var body = this.nextElementSibling;
+      if (body) {
+        body.style.display = body.style.display === 'none' ? 'block' : 'none';
+      }
+    });
+  });
+
+  // ---- Detail rows ----
+  document.querySelectorAll('.detail-toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var row = document.getElementById(this.dataset.target);
+      if (row) {
+        var isOpen = row.classList.contains('open');
+        if (isOpen) {
+          row.classList.remove('open');
+          this.textContent = '展开明细';
+        } else {
+          row.classList.add('open');
+          this.textContent = '收起明细';
+        }
+      }
+    });
+  });
+})();
+</script>
 
 </body>
 </html>
