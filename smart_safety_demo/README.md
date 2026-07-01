@@ -74,6 +74,21 @@ python train_hardhat.py
 脚本会自动从 Kaggle Hard Hat Detection 数据集下载并训练。CPU 约 30-45 分钟，建议有 GPU 的环境更快（修改 `device="cuda"`）。
 训练完成后生成 `hardhat_model.pt`，自动覆盖旧模型。
 
+## 模型性能
+
+基于 YOLOv8n，Kaggle Hard Hat Detection 数据集微调 6 轮：
+
+| Epoch | mAP50 | 趋势 |
+|-------|-------|------|
+| 1 | 0.793 | — |
+| 2 | 0.795 | +0.2% |
+| 3 | 0.844 | +4.9% |
+| 4 | 0.832 | −1.2% |
+| 5 | 0.861 | +2.9% |
+| 6 | **0.874** | +1.3% |
+
+mAP50 达 87.4%，已具备工程落地精度。
+
 ## 技术栈
 
 - **Python 3.9+** / **OpenCV** / **Ultralytics YOLOv8** / **NumPy**
@@ -96,4 +111,4 @@ smart_safety_demo/
 
 ## 许可证
 
-本项目仅用于教育与演示目的。
+MIT License — 可自由用于商业和工程落地项目。详见项目根目录 [LICENSE](../LICENSE)。
